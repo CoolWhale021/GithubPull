@@ -1,0 +1,44 @@
+/* GitHub Sync Plugin Styles */
+
+.github-pull-status {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.github-pull-progress {
+    font-size: 0.9em;
+    color: var(--text-muted);
+}
+
+.setting-item-heading {
+    margin-top: 1.5em;
+    margin-bottom: 0.5em;
+    font-weight: 600;
+}
+
+.setting-item-description a {
+    color: var(--text-accent);
+    text-decoration: none;
+}
+
+.setting-item-description a:hover {
+    text-decoration: underline;
+}
+
+.setting-item-description code {
+    background-color: var(--background-secondary);
+    padding: 2px 4px;
+    border-radius: 3px;
+    font-family: var(--font-monospace);
+    font-size: 0.9em;
+}
+
+.setting-item-description ol {
+    margin-top: 0.5em;
+    padding-left: 1.5em;
+}
+
+.setting-item-description ol li {
+    margin-bottom: 0.3em;
+}
