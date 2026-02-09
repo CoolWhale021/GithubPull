@@ -304,8 +304,8 @@ This plugin:
 
 ## Support
 
-- **Issues**: [GitHub Issues](https://github.com/yourusername/obsidian-github-pull/issues)
-- **Discussions**: [GitHub Discussions](https://github.com/yourusername/obsidian-github-pull/discussions)
+- **Issues**: [GitHub Issues](https://github.com/CoolWhale021/GithubPull/issues)
+- **Discussions**: [GitHub Discussions](https://github.com/CoolWhale021/GithubPull/discussions)
 - **Documentation**: This README
 
 ## Contributing
