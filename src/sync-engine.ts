@@ -156,7 +156,7 @@ export class SyncEngine {
 
 			if (showProgress) {
 				const message = `✓ Sync complete! ` +
-					`Added: ${result.filesAdded}, Modified: ${result.filesModified}`;
+					`Added: ${result.filesAdded}, Modified: ${result.filesModified}, Deleted: ${result.filesDeleted}`;
 				new Notice(message, 5000);
 			}
 
@@ -210,6 +210,23 @@ export class SyncEngine {
 	): Promise<void> {
 		try {
 			this.logger.debug(`Processing file: ${change.path}`, { changeType: change.changeType });
+			
+			if (change.changeType === "deleted") {
+				// Handle file deletion
+				const deleted = await this.fileManager.deleteFile(change.path);
+				if (deleted) {
+					this.logger.debug(`File deleted from vault: ${change.path}`);
+					// Remove from sync state
+					this.stateManager.removeFileState(change.path);
+					result.filesDeleted++;
+					this.logger.info(`Successfully deleted: ${change.path}`);
+				} else {
+					this.logger.debug(`File already absent from vault: ${change.path}`);
+					// Still remove from sync state even if file doesn't exist locally
+					this.stateManager.removeFileState(change.path);
+				}
+				return;
+			}
 			
 			// Download file content - pass SHA for large file support
 			const content = await this.githubAPI.getFileContent(change.path, change.sha);

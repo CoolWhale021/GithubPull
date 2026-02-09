@@ -65,4 +65,24 @@ export class FileManager {
 		const normalizedPath = normalizePath(path);
 		return await this.app.vault.adapter.exists(normalizedPath);
 	}
+
+	async deleteFile(path: string): Promise<boolean> {
+		const normalizedPath = normalizePath(path);
+		
+		// Check if file exists before attempting deletion
+		if (!(await this.app.vault.adapter.exists(normalizedPath))) {
+			return false;
+		}
+
+		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
+		if (file instanceof TFile) {
+			// Use vault.delete for tracked files
+			await this.app.vault.delete(file);
+			return true;
+		} else {
+			// Fallback for files not in vault index
+			await this.app.vault.adapter.remove(normalizedPath);
+			return true;
+		}
+	}
 }

@@ -97,12 +97,22 @@ export class SyncStateManager {
 			}
 		}
 
-		// Optionally check for deleted files
-		// (We're preserving local-only files, so we don't handle deletes)
+		// Check for deleted files (files in local sync state but not in remote)
+		// Only files that were previously synced from GitHub will be deleted
+		for (const [path, localFile] of localFileMap) {
+			if (!remoteFileMap.has(path)) {
+				changes.push({
+					path,
+					sha: localFile.sha,
+					changeType: "deleted"
+				});
+			}
+		}
 
 		this.logger.info("File comparison complete", {
 			added: changes.filter(c => c.changeType === "added").length,
 			modified: changes.filter(c => c.changeType === "modified").length,
+			deleted: changes.filter(c => c.changeType === "deleted").length,
 			total: changes.length
 		});
 
@@ -115,6 +125,10 @@ export class SyncStateManager {
 			sha,
 			lastModified: Date.now()
 		};
+	}
+
+	removeFileState(path: string): void {
+		delete this.state.files[path];
 	}
 
 	getCurrentState(): VaultSyncState {
