@@ -1,6 +1,6 @@
 {
   "name": "obsidian-github-pull",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Pull your Obsidian vault from GitHub without Git installation",
   "main": "main.js",
   "scripts": {

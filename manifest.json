@@ -1,7 +1,7 @@
 {
 	"id": "github-pull",
 	"name": "GitHub Pull",
-	"version": "1.0.0",
+	"version": "1.0.1",
 	"minAppVersion": "0.15.0",
 	"description": "Pull your vault from GitHub without Git installation. Perfect for mobile devices.",
 	"author": "Zhenxing Gu",
