@@ -76,8 +76,8 @@ export class FileManager {
 
 		const file = this.app.vault.getAbstractFileByPath(normalizedPath);
 		if (file instanceof TFile) {
-			// Use vault.delete for tracked files
-			await this.app.vault.delete(file);
+			// Use FileManager.trashFile to respect user's file deletion preference
+			await this.app.fileManager.trashFile(file);
 			return true;
 		} else {
 			// Fallback for files not in vault index

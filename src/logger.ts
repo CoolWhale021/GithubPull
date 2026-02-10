@@ -1,5 +1,11 @@
 import { App } from "obsidian";
 
+interface ErrorData {
+	message: string;
+	stack?: string;
+	name: string;
+}
+
 export class Logger {
 	private app: App;
 	private pluginId: string;
@@ -12,7 +18,7 @@ export class Logger {
 		this.pluginId = pluginId;
 	}
 
-	private formatMessage(level: string, message: string, data?: any): string {
+	private formatMessage(level: string, message: string, data?: unknown): string {
 		const timestamp = new Date().toISOString();
 		let logLine = `[${timestamp}] [${level}] ${message}`;
 		
@@ -27,15 +33,15 @@ export class Logger {
 		return logLine;
 	}
 
-	private async writeLog(message: string) {
+	private async writeLog(message: string): Promise<void> {
 		// Add to memory buffer
 		this.logs.push(message);
 		if (this.logs.length > this.maxLogs) {
 			this.logs.shift(); // Remove oldest log
 		}
 
-		// Also log to console
-		console.log(message);
+		// Also log to console using debug (allowed by Obsidian)
+		console.debug(message);
 
 		// Try to write to file (may fail during plugin load)
 		try {
@@ -44,7 +50,7 @@ export class Logger {
 			// Ensure directory exists
 			try {
 				await this.app.vault.adapter.mkdir(pluginDir);
-			} catch (error) {
+			} catch {
 				// Directory might already exist
 			}
 
@@ -54,7 +60,7 @@ export class Logger {
 			let existingLogs = "";
 			try {
 				existingLogs = await this.app.vault.adapter.read(logPath);
-			} catch (error) {
+			} catch {
 				// File might not exist yet
 			}
 
@@ -66,45 +72,45 @@ export class Logger {
 			const trimmedLogs = lines.slice(-5000).join("\n");
 			
 			await this.app.vault.adapter.write(logPath, trimmedLogs);
-		} catch (error) {
+		} catch (writeError) {
 			// Can't write to file, just keep in memory
-			console.error("Failed to write log file:", error);
+			console.error("Failed to write log file:", writeError);
 		}
 	}
 
-	info(message: string, data?: any) {
+	info(message: string, data?: unknown): void {
 		const formatted = this.formatMessage("INFO", message, data);
-		this.writeLog(formatted);
+		void this.writeLog(formatted);
 	}
 
-	warn(message: string, data?: any) {
+	warn(message: string, data?: unknown): void {
 		const formatted = this.formatMessage("WARN", message, data);
-		this.writeLog(formatted);
+		void this.writeLog(formatted);
 		console.warn(formatted);
 	}
 
-	error(message: string, error?: any) {
-		let errorData: any = error;
+	error(message: string, errorArg?: unknown): void {
+		let errorData: unknown = errorArg;
 		
-		if (error instanceof Error) {
+		if (errorArg instanceof Error) {
 			errorData = {
-				message: error.message,
-				stack: error.stack,
-				name: error.name
-			};
+				message: errorArg.message,
+				stack: errorArg.stack,
+				name: errorArg.name
+			} as ErrorData;
 		}
 		
 		const formatted = this.formatMessage("ERROR", message, errorData);
-		this.writeLog(formatted);
+		void this.writeLog(formatted);
 		console.error(formatted);
 	}
 
-	debug(message: string, data?: any) {
+	debug(message: string, data?: unknown): void {
 		const formatted = this.formatMessage("DEBUG", message, data);
-		this.writeLog(formatted);
+		void this.writeLog(formatted);
 	}
 
-	async getLogs(): Promise<string> {
+	getLogs(): string {
 		return this.logs.join("\n");
 	}
 
@@ -112,7 +118,7 @@ export class Logger {
 		try {
 			const logPath = `.obsidian/plugins/${this.pluginId}/${this.logFile}`;
 			return await this.app.vault.adapter.read(logPath);
-		} catch (error) {
+		} catch {
 			return "No log file found";
 		}
 	}

@@ -31,7 +31,7 @@ export class GitHubAPI {
 	private parseRepositoryUrl(url: string): [string, string] {
 		this.logger.debug("Parsing repository URL", { url });
 		// Handle "owner/repo" or full GitHub URLs
-		const match = url.match(/(?:github\.com\/)?([^\/]+)\/([^\/]+?)(?:\.git)?$/);
+		const match = url.match(/(?:github\.com\/)?([^/]+)\/([^/]+?)(?:\.git)?$/);
 		if (!match) {
 			this.logger.error("Invalid repository URL format", { url });
 			throw new Error("Invalid repository URL format. Use: owner/repo");
@@ -308,7 +308,15 @@ export class GitHubAPI {
 	async getRateLimitStatus(): Promise<{ limit: number; remaining: number; reset: number }> {
 		try {
 			this.logger.debug("Fetching rate limit status");
-			const data = await this.makeRequest<any>("/rate_limit");
+			const data = await this.makeRequest<{
+				resources: {
+					core: {
+						limit: number;
+						remaining: number;
+						reset: number;
+					};
+				};
+			}>("/rate_limit");
 			const status = {
 				limit: data.resources.core.limit,
 				remaining: data.resources.core.remaining,

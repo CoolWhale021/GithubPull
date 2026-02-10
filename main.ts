@@ -28,7 +28,7 @@ export default class GitHubSyncPlugin extends Plugin {
 	async onload() {
 		try {
 			this.logger.info("=== Starting Plugin Load ===");
-			console.log("Loading GitHub Sync plugin");
+			this.logger.debug("Loading GitHub Sync plugin");
 
 			// Load settings
 			this.logger.info("Loading settings...");
@@ -90,14 +90,14 @@ export default class GitHubSyncPlugin extends Plugin {
 			if (this.settings.autoSyncOnLaunch && isConfigured) {
 				this.logger.info("Auto-sync enabled - scheduling sync in 2 seconds");
 				// Delay slightly to let Obsidian fully load
-				setTimeout(async () => {
+				setTimeout(() => {
 					this.logger.info("Auto-sync timer triggered");
 					new Notice("Auto-syncing from GitHub...");
-					await this.syncEngine.performSync(true);
+					void this.syncEngine.performSync(true);
 				}, 2000);
 			} else if (!isConfigured) {
 				this.logger.info("Plugin not configured - showing setup notice");
-				new Notice("GitHub Sync: Please configure repository and token in Settings → GitHub Sync", 8000);
+				new Notice("GitHub Sync: Please configure repository and token in settings", 8000);
 			}
 
 			this.logger.info("=== Plugin Load Complete ===");
@@ -116,7 +116,7 @@ export default class GitHubSyncPlugin extends Plugin {
 
 	onunload() {
 		this.logger.info("=== Plugin Unload ===");
-		console.log("Unloading GitHub Sync plugin");
+		this.logger.debug("Unloading GitHub Sync plugin");
 	}
 
 	async loadSettings() {

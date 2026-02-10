@@ -283,7 +283,7 @@ export class SyncEngine {
 				return { limit: 0, remaining: 0, reset: 0 };
 			}
 			return await this.githubAPI.getRateLimitStatus();
-		} catch (error) {
+		} catch {
 			return { limit: 0, remaining: 0, reset: 0 };
 		}
 	}

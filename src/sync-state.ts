@@ -1,5 +1,5 @@
 import { App } from "obsidian";
-import { VaultSyncState, FileSyncState, GitHubFile, FileChange } from "./types";
+import { VaultSyncState, GitHubFile, FileChange } from "./types";
 import { Logger } from "./logger";
 
 export class SyncStateManager {
@@ -33,7 +33,7 @@ export class SyncStateManager {
 			);
 			this.state = JSON.parse(data);
 			this.logger.info("Sync state loaded", { fileCount: Object.keys(this.state.files).length });
-		} catch (error) {
+		} catch {
 			// File doesn't exist or is invalid, use empty state
 			this.logger.info("No existing sync state found, using empty state");
 			this.state = this.getEmptyState();
@@ -51,7 +51,7 @@ export class SyncStateManager {
 			const pluginDir = `.obsidian/plugins/${this.pluginId}`;
 			try {
 				await this.app.vault.adapter.mkdir(pluginDir);
-			} catch (error) {
+			} catch {
 				// Directory might already exist, ignore error
 			}
 			
