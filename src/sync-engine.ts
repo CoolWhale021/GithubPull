@@ -155,7 +155,7 @@ export class SyncEngine {
 			});
 
 			if (showProgress) {
-				const message = `✓ Sync complete! ` +
+				const message = `Sync complete! ` +
 					`Added: ${result.filesAdded}, Modified: ${result.filesModified}, Deleted: ${result.filesDeleted}`;
 				new Notice(message, 5000);
 			}
@@ -170,7 +170,7 @@ export class SyncEngine {
 			});
 			
 			if (showProgress) {
-				new Notice(`✗ Sync failed: ${error.message}`, 10000);
+				new Notice(`Sync failed: ${error.message}`, 10000);
 			}
 			console.error("Sync error:", error);
 		} finally {

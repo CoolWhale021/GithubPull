@@ -14,7 +14,7 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("GitHub Sync")
+			.setName("Remote Github Repository")
 			.setHeading();
 
 		// Repository URL
@@ -56,26 +56,6 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 				text.inputEl.type = "password";
 			});
 
-		// Auto-sync toggle
-		new Setting(containerEl)
-			.setName("Auto-sync on launch")
-			.setDesc("Automatically sync when Obsidian starts")
-			.addToggle(toggle => toggle
-				.setValue(this.plugin.settings.autoSyncOnLaunch)
-				.onChange(async (value) => {
-					this.plugin.settings.autoSyncOnLaunch = value;
-					await this.plugin.saveSettings();
-				}));
-
-		// Last sync display
-		if (this.plugin.settings.lastSyncTime > 0) {
-			const lastSync = new Date(this.plugin.settings.lastSyncTime);
-			containerEl.createEl("p", {
-				text: `Last sync: ${lastSync.toLocaleString()}`,
-				cls: "setting-item-description"
-			});
-		}
-
 		// Test connection button
 		new Setting(containerEl)
 			.setName("Test connection")
@@ -109,6 +89,29 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 					button.setDisabled(false);
 					button.setButtonText("Test connection");
 				}));
+
+		new Setting(containerEl)
+			.setName("Sync")
+			.setHeading();
+		// Auto-sync toggle
+		new Setting(containerEl)
+			.setName("Auto-sync on launch")
+			.setDesc("Automatically sync when Obsidian starts")
+			.addToggle(toggle => toggle
+				.setValue(this.plugin.settings.autoSyncOnLaunch)
+				.onChange(async (value) => {
+					this.plugin.settings.autoSyncOnLaunch = value;
+					await this.plugin.saveSettings();
+				}));
+
+		// Last sync display
+		if (this.plugin.settings.lastSyncTime > 0) {
+			const lastSync = new Date(this.plugin.settings.lastSyncTime);
+			containerEl.createEl("p", {
+				text: `Last sync: ${lastSync.toLocaleString()}`,
+				cls: "setting-item-description"
+			});
+		}
 
 		// Manual sync button
 		new Setting(containerEl)
