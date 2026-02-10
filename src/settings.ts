@@ -14,7 +14,7 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("GitHub Sync settings")
+			.setName("GitHub Sync")
 			.setHeading();
 
 		// Repository URL
@@ -90,7 +90,7 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 						const success = await this.plugin.syncEngine.testConnection();
 						
 						if (success) {
-							new Notice("✓ Connection successful!");
+							new Notice("Connection successful!");
 							
 							// Show rate limit info
 							const rateLimit = await this.plugin.syncEngine.getRateLimit();
@@ -99,11 +99,11 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 								5000
 							);
 						} else {
-							new Notice("✗ Connection failed. Check your settings.");
+							new Notice("Connection failed. Check your settings.");
 						}
 					} catch (err) {
 						const errorMessage = err instanceof Error ? err.message : String(err);
-						new Notice(`✗ Error: ${errorMessage}`);
+						new Notice(`Error: ${errorMessage}`);
 					}
 					
 					button.setDisabled(false);
@@ -126,7 +126,7 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 							this.display(); // Refresh to show updated last sync time
 						} catch (err) {
 							const errorMessage = err instanceof Error ? err.message : String(err);
-							new Notice(`✗ Sync error: ${errorMessage}`);
+							new Notice(`Sync error: ${errorMessage}`);
 						}
 					
 					button.setDisabled(false);
@@ -148,10 +148,10 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 					try {
 						const logs = await this.plugin.logger.getLogFile();
 						// Create a modal or new file with logs
-						const logFile = "GitHub-Sync-Debug-Logs.md";
+						const logFile = "GitHub-Pull-Debug-Logs.md";
 						const existingFile = this.app.vault.getAbstractFileByPath(logFile);
 						
-						const content = `# GitHub Sync debug logs\n\nGenerated: ${new Date().toISOString()}\n\n\`\`\`\n${logs}\n\`\`\``;
+						const content = `# GitHub Pull debug logs\n\nGenerated: ${new Date().toISOString()}\n\n\`\`\`\n${logs}\n\`\`\``;
 						
 						if (existingFile instanceof TFile) {
 							await this.app.vault.modify(existingFile, content);
@@ -182,44 +182,5 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 						new Notice("Failed to clear logs: " + errorMessage);
 					}
 				}));
-
-		// Setup guide section
-		new Setting(containerEl)
-			.setName("Setup guide")
-			.setHeading();
-		
-		const helpContainer = containerEl.createDiv({ cls: "setting-item-description" });
-		
-		// Create the help content using DOM methods
-		const intro = helpContainer.createEl("p");
-		intro.createEl("strong", { text: "To create a GitHub personal access token:" });
-		
-		const steps = helpContainer.createEl("ol");
-		
-		const step1 = steps.createEl("li");
-		step1.appendText("Go to ");
-		step1.createEl("a", { text: "GitHub Settings → Tokens", href: "https://github.com/settings/tokens/new", attr: { target: "_blank" } });
-		
-		steps.createEl("li", { text: 'Click "Generate new token (classic)"' });
-		steps.createEl("li", { text: 'Give it a name (e.g., "Obsidian Sync")' });
-		
-		const step4 = steps.createEl("li");
-		step4.appendText("Select scope: ");
-		step4.createEl("code", { text: "repo" });
-		step4.appendText(" (for private repos) or ");
-		step4.createEl("code", { text: "public_repo" });
-		
-		steps.createEl("li", { text: "Generate and copy the token" });
-		steps.createEl("li", { text: "Paste it above" });
-		
-		const noteP = helpContainer.createEl("p");
-		noteP.createEl("strong", { text: "Note:" });
-		noteP.appendText(" This plugin syncs ");
-		noteP.createEl("em", { text: "one-way" });
-		noteP.appendText(" from GitHub to your vault. Changes made locally will be overwritten on the next sync.");
-		
-		const troubleP = helpContainer.createEl("p");
-		troubleP.createEl("strong", { text: "Troubleshooting:" });
-		troubleP.appendText(' If the plugin fails to load, click "View logs" above to see detailed error information.');
 	}
 }

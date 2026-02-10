@@ -123,7 +123,7 @@ export class SyncEngine {
 			if (changes.length === 0) {
 				this.logger.info("No changes detected - vault is up to date");
 				if (showProgress) {
-					new Notice("✓ Vault is up to date");
+					new Notice("Vault is up to date");
 				}
 				return result;
 			}

@@ -17,7 +17,7 @@ export default class GitHubSyncPlugin extends Plugin {
 		// Initialize logger immediately
 		try {
 			this.logger = new Logger(app, manifest.id);
-			this.logger.info("=== GitHub Sync Plugin Constructor Called ===");
+			this.logger.info("=== GitHub Pull Plugin Constructor Called ===");
 			this.logger.info("Plugin ID: " + manifest.id);
 			this.logger.info("Plugin Version: " + manifest.version);
 		} catch (error) {
@@ -28,7 +28,7 @@ export default class GitHubSyncPlugin extends Plugin {
 	async onload() {
 		try {
 			this.logger.info("=== Starting Plugin Load ===");
-			this.logger.debug("Loading GitHub Sync plugin");
+			this.logger.debug("Loading GitHub Pull plugin");
 
 			// Load settings
 			this.logger.info("Loading settings...");
@@ -97,17 +97,17 @@ export default class GitHubSyncPlugin extends Plugin {
 				}, 2000);
 			} else if (!isConfigured) {
 				this.logger.info("Plugin not configured - showing setup notice");
-				new Notice("GitHub Sync: Please configure repository and token in settings", 8000);
+				new Notice("GitHub Pull: Please configure repository and token in settings", 8000);
 			}
 
 			this.logger.info("=== Plugin Load Complete ===");
 		} catch (error) {
 			this.logger.error("Fatal error during plugin load", error);
-			console.error("GitHub Sync plugin load failed:", error);
+			console.error("GitHub Pull plugin load failed:", error);
 			
 			// Show user-friendly error message
 			const errorMsg = error.message || String(error);
-			new Notice(`GitHub Sync: ${errorMsg}. Check Settings → GitHub Sync for configuration.`, 10000);
+			new Notice(`GitHub Pull: ${errorMsg}. Check Settings → GitHub Pull for configuration.`, 10000);
 			
 			// Don't throw - allow plugin to load so user can configure it
 			this.logger.warn("Plugin loaded with errors - user can configure in settings");
@@ -116,7 +116,7 @@ export default class GitHubSyncPlugin extends Plugin {
 
 	onunload() {
 		this.logger.info("=== Plugin Unload ===");
-		this.logger.debug("Unloading GitHub Sync plugin");
+		this.logger.debug("Unloading GitHub Pull plugin");
 	}
 
 	async loadSettings() {
