@@ -97,7 +97,7 @@ export default class GitHubSyncPlugin extends Plugin {
 				}, 2000);
 			} else if (!isConfigured) {
 				this.logger.info("Plugin not configured - showing setup notice");
-				new Notice("GitHub Pull: Please configure repository and token in settings", 8000);
+				new Notice("GitHub Pull: please configure repository and token in settings", 8000);
 			}
 
 			this.logger.info("=== Plugin Load Complete ===");

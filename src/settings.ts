@@ -14,7 +14,7 @@ export class GitHubSyncSettingTab extends PluginSettingTab {
 		containerEl.empty();
 
 		new Setting(containerEl)
-			.setName("Remote Github Repository")
+			.setName("Remote repository")
 			.setHeading();
 
 		// Repository URL
