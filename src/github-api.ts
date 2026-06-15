@@ -156,6 +156,16 @@ export class GitHubAPI {
 				// Check if content is empty or missing - this happens for files > 1MB
 				// GitHub returns the metadata but with empty content field
 				if (!data.content || data.content.trim() === "") {
+					// Genuinely empty file (0 bytes). The Contents API also returns
+					// empty content here, so without this check the file would route
+					// to the large-file fallback path and fail downstream because
+					// every fallback also returns empty (correctly — the file IS
+					// empty). The well-known git empty-blob SHA is
+					// e69de29bb2d1d6434b8b29ae775ad8c2e48c5391.
+					if (data.size === 0) {
+						this.logger.debug(`File is empty (0 bytes): ${path}`, { sha: data.sha });
+						return new ArrayBuffer(0);
+					}
 					this.logger.info(`Contents API returned empty content (file likely > 1MB): ${path}`, {
 						reportedSize: data.size,
 						sha: data.sha
