@@ -1,4 +1,4 @@
-import { App } from "obsidian";
+import { App, normalizePath } from "obsidian";
 import { VaultSyncState, GitHubFile, FileChange } from "./types";
 import { Logger } from "./logger";
 
@@ -66,20 +66,20 @@ export class SyncStateManager {
 		}
 	}
 
-	getChangedFiles(remoteFiles: GitHubFile[]): FileChange[] {
+	async getChangedFiles(remoteFiles: GitHubFile[]): Promise<FileChange[]> {
 		this.logger.debug("Comparing local and remote files", {
 			remoteCount: remoteFiles.length,
 			localCount: Object.keys(this.state.files).length
 		});
-		
+
 		const changes: FileChange[] = [];
 		const remoteFileMap = new Map(remoteFiles.map(f => [f.path, f]));
 		const localFileMap = new Map(Object.entries(this.state.files));
 
-		// Check for added and modified files
+		// Check for added, modified, and locally-deleted files
 		for (const [path, remoteFile] of remoteFileMap) {
 			const localFile = localFileMap.get(path);
-			
+
 			if (!localFile) {
 				// New file
 				changes.push({
@@ -93,6 +93,13 @@ export class SyncStateManager {
 					path,
 					sha: remoteFile.sha,
 					changeType: "modified"
+				});
+			} else if (!(await this.app.vault.adapter.exists(normalizePath(path)))) {
+				// Tracked file is missing on disk — user deleted it locally; re-pull from remote
+				changes.push({
+					path,
+					sha: remoteFile.sha,
+					changeType: "added"
 				});
 			}
 		}

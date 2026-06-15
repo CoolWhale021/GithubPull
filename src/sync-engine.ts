@@ -118,7 +118,7 @@ export class SyncEngine {
 
 			// Step 3: Determine what changed
 			this.logger.info("Step 3: Comparing files to find changes");
-			const changes = this.stateManager.getChangedFiles(remoteFiles);
+			const changes = await this.stateManager.getChangedFiles(remoteFiles);
 
 			if (changes.length === 0) {
 				this.logger.info("No changes detected - vault is up to date");
