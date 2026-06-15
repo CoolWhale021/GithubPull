@@ -30,12 +30,26 @@ export class GitHubAPI {
 
 	private parseRepositoryUrl(url: string): [string, string] {
 		this.logger.debug("Parsing repository URL", { url });
-		// Handle "owner/repo" or full GitHub URLs
-		const match = url.match(/(?:github\.com\/)?([^/]+)\/([^/]+?)(?:\.git)?$/);
+
+		const trimmed = url.trim().replace(/\.git$/, "");
+
+		// Accept: "owner/repo", "https://github.com/owner/repo", "git@github.com:owner/repo"
+		// Reject deep links like "https://github.com/owner/repo/tree/main" — those would
+		// previously parse as owner="tree", repo="main" and produce confusing 404s.
+		let match = trimmed.match(/^(?:https?:\/\/)?(?:www\.)?github\.com\/([^/\s]+)\/([^/\s]+)$/);
+		if (!match) {
+			match = trimmed.match(/^git@github\.com:([^/\s]+)\/([^/\s]+)$/);
+		}
+		if (!match) {
+			match = trimmed.match(/^([^/\s]+)\/([^/\s]+)$/);
+		}
 		if (!match) {
 			this.logger.error("Invalid repository URL format", { url });
-			throw new Error("Invalid repository URL format. Use: owner/repo");
+			throw new Error(
+				"Invalid repository URL. Use 'owner/repo' or 'https://github.com/owner/repo'."
+			);
 		}
+
 		const [, owner, repo] = match;
 		this.logger.debug("Repository URL parsed", { owner, repo });
 		return [owner, repo];
