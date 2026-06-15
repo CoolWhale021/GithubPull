@@ -55,15 +55,47 @@ export class GitHubAPI {
 		return [owner, repo];
 	}
 
+	// Retry transient failures (dropped mobile connections, timeouts, 5xx)
+	// with exponential backoff. 4xx errors are not retried — auth, missing
+	// resource, and rate-limit responses won't resolve themselves.
+	private async requestWithRetry(
+		params: RequestUrlParam,
+		attempts = 3
+	): Promise<RequestUrlResponse> {
+		let lastError: unknown;
+		for (let i = 0; i < attempts; i++) {
+			try {
+				return await requestUrl(params);
+			} catch (error) {
+				lastError = error;
+				const msg = (error instanceof Error ? error.message : String(error)) || "";
+				// HTTP 4xx responses include the status code in the thrown error;
+				// don't burn retries on permanent failures.
+				if (/\b4\d{2}\b/.test(msg)) {
+					throw error;
+				}
+				if (i < attempts - 1) {
+					const delay = Math.min(500 * Math.pow(2, i), 4000);
+					this.logger.warn(
+						`Request failed (attempt ${i + 1}/${attempts}), retrying in ${delay}ms`,
+						{ error: msg }
+					);
+					await new Promise(resolve => setTimeout(resolve, delay));
+				}
+			}
+		}
+		throw lastError;
+	}
+
 	private async makeRequest<T>(
 		endpoint: string,
 		options: Partial<RequestUrlParam> = {}
 	): Promise<T> {
 		const url = `${this.baseUrl}${endpoint}`;
 		this.logger.debug("Making GitHub API request", { endpoint, url });
-		
+
 		try {
-			const response: RequestUrlResponse = await requestUrl({
+			const response: RequestUrlResponse = await this.requestWithRetry({
 				url,
 				method: "GET",
 				headers: {
@@ -268,7 +300,7 @@ export class GitHubAPI {
 		this.logger.debug(`Downloading from raw URL: ${rawUrl}`);
 		
 		try {
-			const response: RequestUrlResponse = await requestUrl({
+			const response: RequestUrlResponse = await this.requestWithRetry({
 				url: rawUrl,
 				method: "GET",
 				headers: {
