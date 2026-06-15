@@ -146,18 +146,29 @@ export class SyncEngine {
 			// Update settings with last sync time
 			this.settings.lastSyncTime = Date.now();
 
+			// Per-file failures are captured into result.errors inside applyFileChange
+			// rather than thrown — reflect them in the success flag and the user Notice.
+			result.success = result.errors.length === 0;
+
 			const duration = Date.now() - startTime;
-			this.logger.info("=== Sync Complete ===", {
+			this.logger.info(result.success ? "=== Sync Complete ===" : "=== Sync Completed with errors ===", {
 				duration: `${duration}ms`,
 				filesAdded: result.filesAdded,
 				filesModified: result.filesModified,
+				filesDeleted: result.filesDeleted,
 				errors: result.errors.length
 			});
 
 			if (showProgress) {
-				const message = `Sync complete! ` +
-					`Added: ${result.filesAdded}, Modified: ${result.filesModified}, Deleted: ${result.filesDeleted}`;
-				new Notice(message, 5000);
+				const summary = `Added: ${result.filesAdded}, Modified: ${result.filesModified}, Deleted: ${result.filesDeleted}`;
+				if (result.success) {
+					new Notice(`Sync complete! ${summary}`, 5000);
+				} else {
+					new Notice(
+						`Sync finished with ${result.errors.length} error${result.errors.length > 1 ? "s" : ""}. ${summary}. See debug logs.`,
+						10000
+					);
+				}
 			}
 
 		} catch (error) {
