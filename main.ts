@@ -89,12 +89,16 @@ export default class GitHubSyncPlugin extends Plugin {
 
 			if (this.settings.autoSyncOnLaunch && isConfigured) {
 				this.logger.info("Auto-sync enabled - scheduling sync in 2 seconds");
-				// Delay slightly to let Obsidian fully load
-				setTimeout(() => {
+				// Delay slightly to let Obsidian fully load.
+				// registerInterval also accepts setTimeout handles — Obsidian
+				// will clear the timer automatically on plugin unload so a
+				// quick disable inside the 2s window can't fire performSync
+				// against a half-destroyed engine.
+				this.registerInterval(window.setTimeout(() => {
 					this.logger.info("Auto-sync timer triggered");
 					new Notice("Auto-syncing from GitHub...");
 					void this.syncEngine.performSync(true);
-				}, 2000);
+				}, 2000));
 			} else if (!isConfigured) {
 				this.logger.info("Plugin not configured - showing setup notice");
 				new Notice("Please configure repository and token in settings", 8000);
