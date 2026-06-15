@@ -66,10 +66,14 @@ export class SyncStateManager {
 		}
 	}
 
-	async getChangedFiles(remoteFiles: GitHubFile[]): Promise<FileChange[]> {
+	async getChangedFiles(
+		remoteFiles: GitHubFile[],
+		options: { skipDeletions?: boolean } = {}
+	): Promise<FileChange[]> {
 		this.logger.debug("Comparing local and remote files", {
 			remoteCount: remoteFiles.length,
-			localCount: Object.keys(this.state.files).length
+			localCount: Object.keys(this.state.files).length,
+			skipDeletions: !!options.skipDeletions
 		});
 
 		const changes: FileChange[] = [];
@@ -118,14 +122,19 @@ export class SyncStateManager {
 		}
 
 		// Check for deleted files (files in local sync state but not in remote)
-		// Only files that were previously synced from GitHub will be deleted
-		for (const [path, localFile] of localFileMap) {
-			if (!remoteFileMap.has(path)) {
-				changes.push({
-					path,
-					sha: localFile.sha,
-					changeType: "deleted"
-				});
+		// Only files that were previously synced from GitHub will be deleted.
+		// Skip this when the remote tree is truncated — missing entries are
+		// likely an artifact of truncation, not real deletions, and we would
+		// otherwise wipe huge swaths of the vault.
+		if (!options.skipDeletions) {
+			for (const [path, localFile] of localFileMap) {
+				if (!remoteFileMap.has(path)) {
+					changes.push({
+						path,
+						sha: localFile.sha,
+						changeType: "deleted"
+					});
+				}
 			}
 		}
 

@@ -110,7 +110,7 @@ export class GitHubAPI {
 		}
 	}
 
-	async getRepositoryTree(): Promise<GitHubFile[]> {
+	async getRepositoryTree(): Promise<{ files: GitHubFile[]; truncated: boolean }> {
 		try {
 			this.logger.info("Fetching repository tree");
 			const data = await this.makeRequest<GitHubTreeResponse>(
@@ -119,17 +119,17 @@ export class GitHubAPI {
 
 			if (data.truncated) {
 				this.logger.warn("Repository tree was truncated - some files may be missing");
-				console.warn("Repository tree was truncated. Some files may be missing.");
 			}
 
 			// Filter to only include blobs (files), not trees (directories)
 			const files = data.tree.filter(item => item.type === "blob");
 			this.logger.info(`Repository tree fetched successfully`, {
 				totalItems: data.tree.length,
-				fileCount: files.length
+				fileCount: files.length,
+				truncated: data.truncated
 			});
-			
-			return files;
+
+			return { files, truncated: data.truncated };
 		} catch (error) {
 			this.logger.error("Failed to fetch repository tree", error);
 			throw new Error(`Failed to fetch repository tree: ${error.message}`);

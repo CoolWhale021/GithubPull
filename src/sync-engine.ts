@@ -109,16 +109,32 @@ export class SyncEngine {
 
 			// Step 1: Fetch remote repository tree
 			this.logger.info("Step 1: Fetching repository tree from GitHub");
-			const remoteFiles = await this.githubAPI.getRepositoryTree();
-			this.logger.info(`Fetched ${remoteFiles.length} files from GitHub`);
-			
+			const { files: remoteFiles, truncated } = await this.githubAPI.getRepositoryTree();
+			this.logger.info(`Fetched ${remoteFiles.length} files from GitHub`, { truncated });
+
+			if (truncated) {
+				const warning =
+					"GitHub returned a truncated tree (repository exceeds the API limit). " +
+					"Skipping deletion detection this sync to avoid wiping local files that were " +
+					"merely omitted from the response.";
+				this.logger.warn(warning);
+				if (showProgress) {
+					new Notice(
+						"GitHub tree was truncated — local files will not be deleted this sync.",
+						10000
+					);
+				}
+			}
+
 			// Step 2: Load local sync state
 			this.logger.info("Step 2: Loading local sync state");
 			await this.stateManager.loadState();
 
 			// Step 3: Determine what changed
 			this.logger.info("Step 3: Comparing files to find changes");
-			const changes = await this.stateManager.getChangedFiles(remoteFiles);
+			const changes = await this.stateManager.getChangedFiles(remoteFiles, {
+				skipDeletions: truncated
+			});
 
 			if (changes.length === 0) {
 				this.logger.info("No changes detected - vault is up to date");
