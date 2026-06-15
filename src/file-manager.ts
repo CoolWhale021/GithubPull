@@ -34,24 +34,33 @@ export class FileManager {
 		}
 	}
 
+	// Default to binary for anything not on this list — UTF-8 decode/re-encode
+	// of unknown formats (fonts, .heic, .psd, .epub, etc.) corrupts the bytes.
+	private static readonly TEXT_EXTENSIONS = new Set([
+		'.md', '.markdown', '.txt', '.text',
+		'.json', '.yaml', '.yml', '.toml', '.xml', '.html', '.htm',
+		'.css', '.scss', '.less',
+		'.js', '.mjs', '.cjs', '.ts', '.jsx', '.tsx',
+		'.py', '.rb', '.sh', '.bash', '.zsh', '.ps1', '.bat', '.cmd',
+		'.csv', '.tsv',
+		'.canvas', '.excalidraw',
+		'.org', '.rst', '.tex',
+		'.log', '.ini', '.conf', '.cfg', '.env',
+		'.gitignore', '.gitattributes', '.editorconfig', '.npmrc'
+	]);
+
 	private isBinaryFile(path: string): boolean {
-		const binaryExtensions = [
-			// Images
-			'.png', '.jpg', '.jpeg', '.gif', '.bmp', '.ico', '.webp', '.svg',
-			// Documents
-			'.pdf', '.doc', '.docx', '.xls', '.xlsx', '.ppt', '.pptx',
-			// Archives
-			'.zip', '.rar', '.7z', '.tar', '.gz', '.bz2',
-			// Audio/Video
-			'.mp3', '.mp4', '.avi', '.mov', '.wav', '.flac', '.ogg',
-			// Executables and libraries
-			'.exe', '.dll', '.so', '.dylib',
-			// Other binary formats
-			'.bin', '.dat', '.db', '.sqlite'
-		];
-		
 		const lowerPath = path.toLowerCase();
-		return binaryExtensions.some(ext => lowerPath.endsWith(ext));
+		const lastSlash = Math.max(lowerPath.lastIndexOf('/'), lowerPath.lastIndexOf('\\'));
+		const lastDot = lowerPath.lastIndexOf('.');
+
+		// No extension — default to binary (preserves bytes; safe for unknown files)
+		if (lastDot <= lastSlash) {
+			return true;
+		}
+
+		const ext = lowerPath.substring(lastDot);
+		return !FileManager.TEXT_EXTENSIONS.has(ext);
 	}
 
 	private async ensureDirectoryExists(filePath: string): Promise<void> {
