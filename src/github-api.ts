@@ -114,7 +114,7 @@ export class GitHubAPI {
 		try {
 			this.logger.info("Fetching repository tree");
 			const data = await this.makeRequest<GitHubTreeResponse>(
-				`/repos/${this.owner}/${this.repo}/git/trees/${this.branch}?recursive=1`
+				`/repos/${this.owner}/${this.repo}/git/trees/${encodeURIComponent(this.branch)}?recursive=1`
 			);
 
 			if (data.truncated) {
@@ -145,8 +145,12 @@ export class GitHubAPI {
 			let contentsApiError: Error | null = null;
 			
 			try {
+				// Encode each segment separately so '/' separators are preserved.
+				// Plain encodeURIComponent(path) would emit '%2F' for slashes and
+				// break nested paths.
+				const encodedPath = path.split("/").map(seg => encodeURIComponent(seg)).join("/");
 				const data = await this.makeRequest<GitHubContentResponse>(
-					`/repos/${this.owner}/${this.repo}/contents/${encodeURIComponent(path)}?ref=${this.branch}`
+					`/repos/${this.owner}/${this.repo}/contents/${encodedPath}?ref=${encodeURIComponent(this.branch)}`
 				);
 
 				// Check if content is empty or missing - this happens for files > 1MB
@@ -250,7 +254,7 @@ export class GitHubAPI {
 	private async downloadRawFile(path: string): Promise<ArrayBuffer> {
 		// Properly encode path components for URL (handle Chinese characters and spaces)
 		const encodedPath = path.split('/').map(segment => encodeURIComponent(segment)).join('/');
-		const rawUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${this.branch}/${encodedPath}`;
+		const rawUrl = `https://raw.githubusercontent.com/${this.owner}/${this.repo}/${encodeURIComponent(this.branch)}/${encodedPath}`;
 		this.logger.debug(`Downloading from raw URL: ${rawUrl}`);
 		
 		try {
