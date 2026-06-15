@@ -25,10 +25,18 @@ export class FileManager {
 			const existingFile = this.app.vault.getAbstractFileByPath(normalizedPath);
 
 			if (existingFile instanceof TFile) {
-				// Update existing file
+				// In the vault index — prefer vault.modify so other plugins
+				// receive file-change events.
 				await this.app.vault.modify(existingFile, textContent);
+			} else if (await this.app.vault.adapter.exists(normalizedPath)) {
+				// On disk but not in the vault index. Happens for paths
+				// Obsidian doesn't track (anything under .obsidian/, root
+				// dotfiles like .gitignore) and for case-mismatch on
+				// case-insensitive filesystems. vault.create would throw
+				// "File already exists"; the adapter overwrites silently.
+				await this.app.vault.adapter.write(normalizedPath, textContent);
 			} else {
-				// Create new file
+				// Genuinely new file.
 				await this.app.vault.create(normalizedPath, textContent);
 			}
 		}
