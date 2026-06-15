@@ -51,7 +51,8 @@ export default class GitHubSyncPlugin extends Plugin {
 				this.app,
 				this.settings,
 				this.stateManager,
-				this.logger
+				this.logger,
+				() => this.saveSettings()
 			);
 			this.logger?.info("Sync engine initialized");
 

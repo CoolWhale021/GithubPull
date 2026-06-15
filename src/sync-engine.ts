@@ -13,18 +13,21 @@ export class SyncEngine {
 	private fileManager: FileManager;
 	private isSyncing: boolean = false;
 	private logger: Logger;
+	private persistSettings?: () => Promise<void>;
 
 	constructor(
 		app: App,
 		settings: GitHubSyncSettings,
 		stateManager: SyncStateManager,
-		logger: Logger
+		logger: Logger,
+		persistSettings?: () => Promise<void>
 	) {
 		this.app = app;
 		this.settings = settings;
 		this.stateManager = stateManager;
 		this.fileManager = new FileManager(app);
 		this.logger = logger;
+		this.persistSettings = persistSettings;
 		this.logger.debug("SyncEngine initialized");
 		this.initializeAPI();
 	}
@@ -159,8 +162,16 @@ export class SyncEngine {
 			currentState.lastSyncTimestamp = Date.now();
 			await this.stateManager.saveState(currentState);
 
-			// Update settings with last sync time
+			// Update settings with last sync time and persist so the value
+			// survives Obsidian restart (previously this was in-memory only).
 			this.settings.lastSyncTime = Date.now();
+			if (this.persistSettings) {
+				try {
+					await this.persistSettings();
+				} catch (persistError) {
+					this.logger.warn("Failed to persist lastSyncTime after sync", persistError);
+				}
+			}
 
 			// Per-file failures are captured into result.errors inside applyFileChange
 			// rather than thrown — reflect them in the success flag and the user Notice.
