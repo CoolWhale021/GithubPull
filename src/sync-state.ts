@@ -76,7 +76,10 @@ export class SyncStateManager {
 		const remoteFileMap = new Map(remoteFiles.map(f => [f.path, f]));
 		const localFileMap = new Map(Object.entries(this.state.files));
 
-		// Check for added, modified, and locally-deleted files
+		// Files whose SHA matches local state — defer existence checks for batched parallel lookup
+		const unchangedCandidates: GitHubFile[] = [];
+
+		// Check for added and modified files
 		for (const [path, remoteFile] of remoteFileMap) {
 			const localFile = localFileMap.get(path);
 
@@ -94,11 +97,21 @@ export class SyncStateManager {
 					sha: remoteFile.sha,
 					changeType: "modified"
 				});
-			} else if (!(await this.app.vault.adapter.exists(normalizePath(path)))) {
-				// Tracked file is missing on disk — user deleted it locally; re-pull from remote
+			} else {
+				unchangedCandidates.push(remoteFile);
+			}
+		}
+
+		// Detect locally-deleted-but-tracked files in parallel; re-pull any that are missing on disk
+		const existenceResults = await Promise.all(
+			unchangedCandidates.map(f => this.app.vault.adapter.exists(normalizePath(f.path)))
+		);
+		for (let i = 0; i < unchangedCandidates.length; i++) {
+			if (!existenceResults[i]) {
+				const f = unchangedCandidates[i];
 				changes.push({
-					path,
-					sha: remoteFile.sha,
+					path: f.path,
+					sha: f.sha,
 					changeType: "added"
 				});
 			}
