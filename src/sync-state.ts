@@ -1,4 +1,4 @@
-import { App, normalizePath } from "obsidian";
+import { App, Notice, normalizePath } from "obsidian";
 import { VaultSyncState, GitHubFile, FileChange } from "./types";
 import { Logger } from "./logger";
 
@@ -26,16 +26,48 @@ export class SyncStateManager {
 	}
 
 	async loadState(): Promise<VaultSyncState> {
+		const statePath = `.obsidian/plugins/${this.pluginId}/${this.dataFile}`;
+		this.logger.debug("Loading sync state from file");
+
+		let raw: string;
 		try {
-			this.logger.debug("Loading sync state from file");
-			const data = await this.app.vault.adapter.read(
-				`.obsidian/plugins/${this.pluginId}/${this.dataFile}`
-			);
-			this.state = JSON.parse(data);
-			this.logger.info("Sync state loaded", { fileCount: Object.keys(this.state.files).length });
+			raw = await this.app.vault.adapter.read(statePath);
 		} catch {
-			// File doesn't exist or is invalid, use empty state
+			// True "no file yet" case — first run, or user deleted state intentionally.
 			this.logger.info("No existing sync state found, using empty state");
+			this.state = this.getEmptyState();
+			return this.state;
+		}
+
+		try {
+			const parsed = JSON.parse(raw);
+			if (
+				!parsed ||
+				typeof parsed !== "object" ||
+				!parsed.files ||
+				typeof parsed.files !== "object"
+			) {
+				throw new Error("Sync state JSON is missing required fields");
+			}
+			this.state = parsed as VaultSyncState;
+			this.logger.info("Sync state loaded", { fileCount: Object.keys(this.state.files).length });
+		} catch (error) {
+			// Corrupted JSON: do not silently reset — would cause the next sync to
+			// treat every remote file as "added" and re-pull the entire vault.
+			// Back up the bad file and warn the user.
+			this.logger.error("Sync state file is corrupted", error);
+			const backupPath = `${statePath}.corrupted-${Date.now()}`;
+			try {
+				await this.app.vault.adapter.write(backupPath, raw);
+				this.logger.warn(`Corrupted sync state backed up to ${backupPath}`);
+			} catch (backupError) {
+				this.logger.error("Failed to back up corrupted sync state", backupError);
+			}
+			new Notice(
+				"GitHub Pull: sync state file was corrupted and has been reset. " +
+				"The next sync will re-download all files. A backup was saved alongside it.",
+				15000
+			);
 			this.state = this.getEmptyState();
 		}
 		return this.state;
